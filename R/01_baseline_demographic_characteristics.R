@@ -1,5 +1,5 @@
 # ==============================================================================
-# 01_baseline_demographic_characteristics.R
+# 02_baseline_demographic_characteristics.R
 #
 # Purpose
 # -------
@@ -22,11 +22,11 @@
 #
 # Default output directory
 # ------------------------
-# outputs/01_baseline_demographic_characteristics
+# outputs/02_baseline_demographic_characteristics
 #
 # Optional command-line usage
 # ---------------------------
-# Rscript R/01_baseline_demographic_characteristics.R \
+# Rscript R/02_baseline_demographic_characteristics.R \
 #   path/to/input.xlsx path/to/output_directory
 # ==============================================================================
 
@@ -91,7 +91,7 @@ input_file <- if (length(args) >= 1) {
 output_dir <- if (length(args) >= 2) {
   args[[2]]
 } else {
-  file.path("outputs", "01_baseline_demographic_characteristics")
+  file.path("outputs", "02_baseline_demographic_characteristics")
 }
 
 if (!file.exists(input_file)) {
