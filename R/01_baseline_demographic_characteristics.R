@@ -1,6 +1,6 @@
 # ==============================================================================
 # 01_baseline_demographic_characteristics.R
-# 
+#
 # Purpose
 # -------
 # Generate Table 1 and supporting baseline/follow-up outputs for the PPMI
