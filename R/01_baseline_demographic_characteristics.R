@@ -81,7 +81,11 @@ args <- commandArgs(trailingOnly = TRUE)
 input_file <- if (length(args) >= 1) {
   args[[1]]
 } else {
-  file.path("data", "PPMI_with_NLR_all_visits_updated.xlsx")
+  file.path(
+    "data",
+    "derived",
+    "PPMI_with_NLR_all_visits_updated.xlsx"
+  )
 }
 
 output_dir <- if (length(args) >= 2) {
