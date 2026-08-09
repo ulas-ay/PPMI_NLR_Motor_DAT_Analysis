@@ -49,7 +49,7 @@ Users are responsible for complying with the PPMI data-use agreement. Restricted
 
 No data or output directories are included in the repository.
 
-All input datasets and generated outputs are stored outside the repository and supplied to the scripts through command-line arguments or through `run_all_analyses.R`.
+All input datasets and generated outputs are stored outside the repository. Paths are supplied through command-line arguments, environment variables, or `run_all_analyses.R`.
 
 ## Analysis workflow
 
@@ -71,10 +71,15 @@ Derived variables include:
 The script requires:
 
 1. the raw merged PPMI Excel workbook;
-2. the path where the derived workbook will be written;
-3. a directory for supporting outputs.
+2. a common external output root.
 
-The main derived workbook is used by Scripts 02-09.
+Script 01 automatically creates its output directory and writes the main derived workbook to:
+
+```text
+<PPMI_OUTPUT_ROOT>/01_NLR/PPMI_with_NLR_all_visits_updated.xlsx
+```
+
+The derived workbook is then used by Scripts 02-09.
 
 ### `R/02_baseline_demographic_characteristics.R`
 
@@ -255,7 +260,6 @@ c(
   "openxlsx",
   "dplyr",
   "tidyr",
-  "stringr",
   "tibble",
   "broom",
   "ggplot2",
@@ -277,8 +281,7 @@ install.packages(
     "openxlsx",
     "dplyr",
     "tidyr",
-    "stringr",
-    "tibble",
+      "tibble",
     "broom",
     "ggplot2",
     "gt",
@@ -297,21 +300,41 @@ Each script checks for required packages and stops with an informative message w
 
 The repository does not contain data or generated outputs.
 
-The raw PPMI workbook, derived workbook, and output directories must be located outside the repository.
+The raw PPMI workbook and all generated analysis outputs must be stored outside the repository.
 
-Script 01 requires three paths:
+All scripts use a common external output root (`PPMI_OUTPUT_ROOT`). Script 01 creates the derived NLR workbook automatically at:
+
+```text
+<PPMI_OUTPUT_ROOT>/01_NLR/PPMI_with_NLR_all_visits_updated.xlsx
+```
+
+Script 01 therefore requires two paths:
 
 ```text
 1. Raw merged PPMI Excel workbook
-2. Derived NLR workbook
-3. Supporting output directory
+2. Common output root
 ```
 
-Scripts 02-09 require two paths:
+Scripts 02-09 also require two paths:
 
 ```text
-1. Derived NLR workbook
-2. Script-specific output directory
+1. Derived NLR workbook created by Script 01
+2. The same common output root
+```
+
+Each script creates its own subdirectory under the common output root. The current workflow uses:
+
+```text
+01_NLR/
+02_BASELINE_CHARACTERISTICS/
+03_NLR_LONGITUDINAL/
+04_NLR_MOTOR_PROGRESSION/
+05_TIMEVARYING_NLR_UPDRS/
+06_NLR_DAT_DECLINE/
+07_TIMEVARYING_NLR_DAT/
+08_NLR_MODERATION_STRIATAL_DAT/
+09_NLR_MODERATION_STRIATAL_DAT_4Y/
+workflow_logs/
 ```
 
 The derived workbook created by Script 01 must contain the worksheet:
@@ -322,19 +345,26 @@ All_data_with_NLR
 
 Scripts perform column checks and attempt to identify common alternative names for variables such as age, sex, BMI, study site, disease duration, LEDD, dominant side, UPDRS-III, and regional DAT measures.
 
+Paths may be supplied through command-line arguments. The analysis scripts also support the `PPMI_OUTPUT_ROOT` environment variable; Scripts 02-09 may additionally use `PPMI_NLR_DATA_FILE` to specify the derived NLR workbook.
+
 ## How to run
 
 Run commands from the repository root.
 
-Because data and output directories are external to the repository, explicit file paths should be supplied.
+Because data and output directories are external to the repository, explicit file paths should be supplied or configured through the workflow wrapper.
 
 ### Run Script 01
 
 ```bash
 Rscript R/01_calculate_nlr_and_prepare_datasets.R \
   /path/to/PPMI_with_serum_all_visits_all_blood_merged.xlsx \
-  /path/to/PPMI_with_NLR_all_visits_updated.xlsx \
-  /path/to/outputs/01_nlr_calculation
+  /path/to/analysis_outputs
+```
+
+Script 01 will create:
+
+```text
+/path/to/analysis_outputs/01_NLR/PPMI_with_NLR_all_visits_updated.xlsx
 ```
 
 ### Run Scripts 02-09 individually
@@ -343,17 +373,19 @@ Example:
 
 ```bash
 Rscript R/04_baseline_nlr_motor_progression.R \
-  /path/to/PPMI_with_NLR_all_visits_updated.xlsx \
-  /path/to/outputs/04_baseline_nlr_motor_progression
+  /path/to/analysis_outputs/01_NLR/PPMI_with_NLR_all_visits_updated.xlsx \
+  /path/to/analysis_outputs
 ```
 
 The same structure applies to Scripts 02-09:
 
 ```bash
 Rscript R/<script_name>.R \
-  /path/to/PPMI_with_NLR_all_visits_updated.xlsx \
-  /path/to/script_specific_output_directory
+  /path/to/analysis_outputs/01_NLR/PPMI_with_NLR_all_visits_updated.xlsx \
+  /path/to/analysis_outputs
 ```
+
+Each script creates its own output subdirectory under the common output root.
 
 ### Run the complete workflow
 
@@ -363,17 +395,31 @@ The complete workflow can be launched through:
 Rscript run_all_analyses.R
 ```
 
-Before running it, define the external raw-data path, derived-data path, and main output directory in `run_all_analyses.R`.
+Before running it, define the external raw-data path and the main output directory in `run_all_analyses.R`.
 
-The wrapper script should execute the analysis scripts in this order:
+Alternatively, provide both paths on the command line:
+
+```bash
+Rscript run_all_analyses.R \
+  /path/to/PPMI_with_serum_all_visits_all_blood_merged.xlsx \
+  /path/to/analysis_outputs
+```
+
+The wrapper derives the Script 01 output workbook path automatically and executes the scripts in this order:
 
 ```text
 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09
 ```
 
+If any script fails, the workflow stops and the corresponding log file is retained under:
+
+```text
+<PPMI_OUTPUT_ROOT>/workflow_logs/
+```
+
 ## Outputs
 
-Each analysis writes its results to the external output directory specified by the user.
+Each analysis writes its results to a script-specific subdirectory created automatically under the common external output root.
 
 Outputs include, where applicable:
 
@@ -384,7 +430,7 @@ Outputs include, where applicable:
 - Type III model tests;
 - random-effect variance estimates;
 - model-fit indices;
-- estimated marginal means;
+- estimated marginal means and/or model-derived predictions;
 - simple-slope analyses;
 - sensitivity-model results;
 - model-diagnostic plots;
@@ -404,7 +450,7 @@ Longitudinal analyses use linear mixed-effects models with:
 - Type III tests;
 - covariate adjustment specified within each script;
 - model diagnostics and convergence checks;
-- outcome-specific complete-case analysis.
+- model-specific exclusion of observations missing variables required for that analysis, while retaining available longitudinal observations from participants with partial follow-up.
 
 Time is coded as years from baseline, with baseline equal to zero.
 
@@ -417,7 +463,7 @@ Time-varying NLR analyses separate:
 
 ## Reproducibility
 
-Each script supports external input and output paths through command-line arguments.
+Each script supports external input and output paths through command-line arguments; the workflow also supports a common `PPMI_OUTPUT_ROOT`, and Scripts 02-09 may use `PPMI_NLR_DATA_FILE` for the derived NLR workbook.
 
 Each output directory contains a `sessionInfo.txt` file recording the R version, platform, and loaded package versions used during execution.
 
